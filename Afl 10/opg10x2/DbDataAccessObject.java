@@ -37,9 +37,13 @@ public class DbDataAccessObject {
 
 				stmt.executeUpdate(sql);
 				System.out.println("Created table PERSON");
+				
 			} catch (SQLException e) {
 				System.out.println("Failed to create table PERSON");
 				e.printStackTrace();
+				
+				stmt.close();
+				con.close();
 			}
 		}
 
@@ -56,8 +60,15 @@ public class DbDataAccessObject {
 
 			stmt.executeUpdate(sql);
 			System.out.println("Inserted " + person.getFirstName() + " into table PERSON");
+			
+			stmt.close();
+			con.close();
+			
 		} catch (SQLException e) {
 			System.out.println("Failed to insert " + person.getFirstName() + " into table PERSON");
+			
+			stmt.close();
+			con.close();
 			e.printStackTrace();
 		}
 
@@ -90,6 +101,10 @@ public class DbDataAccessObject {
 				while(rs.next())
 					person = new Person(id, rs.getString("FIRST_NAME"), rs.getString("LAST_NAME"));
 
+				rs.close();
+				stmt.close();
+				con.close();
+				
 				System.out.println("Fetched " + person.getFirstName() + " from table PERSON");
 
 				return person;
@@ -97,11 +112,19 @@ public class DbDataAccessObject {
 			} catch (SQLException e) {
 				System.out.println("Failed to fetch data from table PERSON");
 				e.printStackTrace();
+				
+				stmt.close();
+				con.close();
+				
 				System.exit(1);
 				return null;
 			}
 		} else {
 			System.out.println("No PERSON table exists");
+			
+			stmt.close();
+			con.close();
+			
 			return null;
 		}
 	}
