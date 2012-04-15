@@ -17,6 +17,8 @@ public class MainClass {
 		for ( String s : names )
 			System.out.println(s);
 		
+		// Flushes the table for reset
+		dropTable();
 	}
 	
 	public static void saveName(String name) {
@@ -53,6 +55,13 @@ public class MainClass {
 		}
 		
 		return al;
-		
+	}
+	
+	public static void dropTable() {
+		try {
+			DbDAO.dropTable();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 }

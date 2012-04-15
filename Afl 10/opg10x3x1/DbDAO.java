@@ -8,24 +8,35 @@ import java.sql.Statement;
 import java.util.ArrayList;
 
 public class DbDAO {
-	
+
+	static {
+		try {
+			Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static Connection con;
+	private static Statement stmt;
+
 	public static void saveName(String name) throws SQLException, ClassNotFoundException {
-		Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
+
 
 		String url = "jdbc:derby:NameDB;create=true";
-		Connection con = DriverManager.getConnection(url);
-		Statement stmt = con.createStatement();
+		con = DriverManager.getConnection(url);
+		stmt = con.createStatement();
 
 		// Check if the table exists and create it if it does not.
-		boolean personTableIsCreated = false;
+		boolean nameTableIsCreated = false;
 		ResultSet cmd = con.getMetaData().getTables(null, null, null, 
 				new String[] {"TABLE"});
 		while (cmd.next()) {
 			if (cmd.getString("TABLE_NAME").equals("NAME"))
-				personTableIsCreated = true;
+				nameTableIsCreated = true;
 		}
 
-		if (!personTableIsCreated) {
+		if (!nameTableIsCreated) {
 			try {
 				String sql = "";
 
@@ -36,11 +47,11 @@ public class DbDAO {
 
 				stmt.executeUpdate(sql);
 				System.out.println("Created table NAME");
-				
+
 			} catch (SQLException e) {
 				System.out.println("Failed to create table NAME");
 				e.printStackTrace();
-				
+
 				stmt.close();
 				con.close();
 			}
@@ -57,53 +68,51 @@ public class DbDAO {
 
 			stmt.executeUpdate(sql);
 			System.out.println("Inserted " + name + " into table NAME");
-			
+
 			stmt.close();
 			con.close();
-			
+
 		} catch (SQLException e) {
 			System.out.println("Failed to insert " + name + " into table NAME");
-			
+
 			stmt.close();
 			con.close();
 			e.printStackTrace();
 		}
 	}
-	
+
 	// Loads all the names from the database
 	public static ArrayList<String> loadAllNames() throws ClassNotFoundException, SQLException {
-		
-		Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
 
 		String url = "jdbc:derby:NameDB;create=true";
-		Connection con = DriverManager.getConnection(url);
-		Statement stmt = con.createStatement();
+		con = DriverManager.getConnection(url);
+		stmt = con.createStatement();
 
 		// Check if the table exists.
-		boolean personTableExists = false;
+		boolean nameTableExists = false;
 		ResultSet cmd = con.getMetaData().getTables(null, null, null, 
 				new String[] {"TABLE"});
 		while (cmd.next()) {
 			if (cmd.getString("TABLE_NAME").equals("NAME"))
-				personTableExists = true;
+				nameTableExists = true;
 		}
 
-		ArrayList<String> al = null;
-		if (personTableExists) {
-			al = new ArrayList<String>();
+		final ArrayList<String> al = new ArrayList<String>();
+		if (nameTableExists) {
 			try {
 				String sql = "";
 
 				sql += "SELECT * FROM NAME";
-				ResultSet rs = stmt.executeQuery(sql); 		// TODO HER SKAL QUERY LAVES OM, TIL DET NYE DER!
-				
-				while(rs.next())
-					al.add(rs.getString(1));
 
-				rs.close();
+				executeQuery("select * from NAME", new QueryCallBack() {
+					public void processRecord(ResultSet rs) throws SQLException {
+						al.add(rs.getString(1));
+					}
+				});
+
 				stmt.close();
 				con.close();
-				
+
 				System.out.println("Fetched " + al.size() + " entries from table NAME");
 
 				return al;
@@ -111,21 +120,47 @@ public class DbDAO {
 			} catch (SQLException e) {
 				System.out.println("Failed to fetch data from table NAME");
 				e.printStackTrace();
-				
+
 				stmt.close();
 				con.close();
-				
+
 				System.exit(1);
 				return null;
 			}
 		} else {
 			System.out.println("No NAME table exists");
-			
+
 			stmt.close();
 			con.close();
-			
+
 			return null;
 		}
 	}
 	
+	// Drops the table
+	public static void dropTable() throws SQLException {
+		String url = "jdbc:derby:NameDB;create=true";
+		con = DriverManager.getConnection(url);
+		stmt = con.createStatement();
+		
+		stmt.executeUpdate("DROP TABLE NAME");
+		
+		stmt.close();
+		con.close();
+	}
+
+	// Executes a query with callback so that we make sure, that the result set is closed afterwards
+	private static void executeQuery(String query, QueryCallBack qcb) {
+		try {
+			ResultSet rs = stmt.executeQuery(query);
+			while (rs.next())
+				qcb.processRecord(rs);
+			rs.close();
+			stmt.close();
+			con.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
 }
