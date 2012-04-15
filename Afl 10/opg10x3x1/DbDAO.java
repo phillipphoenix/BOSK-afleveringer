@@ -100,11 +100,8 @@ public class DbDAO {
 		final ArrayList<String> al = new ArrayList<String>();
 		if (nameTableExists) {
 			try {
-				String sql = "";
 
-				sql += "SELECT * FROM NAME";
-
-				executeQuery("select * from NAME", new QueryCallBack() {
+				executeQuery("SELECT * from NAME", new QueryCallBack() {
 					public void processRecord(ResultSet rs) throws SQLException {
 						al.add(rs.getString(1));
 					}
