@@ -1,4 +1,4 @@
-package opg10x1;
+package opg11x1;
 
 /*
 Skal bruges i forbindelse med opgave 11.1.
